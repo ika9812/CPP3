@@ -7,6 +7,8 @@
 cbuffer CBParam : register(b0)
 {
     float4 baseColor;
+    float sp;
+    float3 testPos;
 };
 
 // ----------------------------------------------------------
@@ -58,11 +60,10 @@ PSInput VS(VSInput vin)
     float4 worldPos = p;
 
     float l = length(worldPos.xz);
-    worldPos.y += sin(l * -0.5 + time.x);
+    worldPos.y += sin(l * sp + time.x);
 
     p = mul(worldPos, view);
     p = mul(p, projection);
-
     Out.pos = p;
     
     float c = worldPos.y * 0.2 + 0.5;
@@ -73,12 +74,31 @@ PSInput VS(VSInput vin)
 
  
 // ----------------------------------------------------------
-// ピクセル
+// ピクセルシェーダ
 // ----------------------------------------------------------
+// 共通ライト
+cbuffer LightPerFrame : register(b11)
+{
+    float4 ambientColor;
+    float4 directionalColor;
+    float3 directionW;
+    uint pad;
+};
 
 // ピクセルシェーダー
 float4 PS(PSInput In) : SV_Target0
 {
+    // 明示的に法線を正規化（モデルスケール非均等だと崩れるため）
+    float3 N = normalize(In.nrmW);
+    
+    // ライトループ
+    float4 diffAccum = ambientColor; // 環境光
+    float cos = dot(N, -directionW);
+    diffAccum += directionalColor * cos;
+    //baseColor = directionalColor * cos;
+    // カラー合成
+    float4 color = float4(diffAccum.rgb, 1) * baseColor;
+
     // テクスチャの色を出力
-    return In.color;
+    return color;
 }

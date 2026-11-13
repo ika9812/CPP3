@@ -12,6 +12,8 @@ namespace
     struct CBParam // register(b0)
     {
         Color baseColor;
+        float sp;
+		Vector3 testPos;
     };
     constexpr int CBSlot = 0;
 
@@ -24,6 +26,8 @@ namespace
         Color(0.5, 0, 0),
         Color(0, 0.5, 0),
         Color(0, 0, 0.5),
+        Color(0.5, 0.5, 0),
+        Color(0.3,0.2,0.2)
     };
     constexpr int tableSize = sizeof(colorTable) / sizeof(Color);
 }
@@ -49,11 +53,24 @@ void CBController::Update()
         colorIndex = (colorIndex + 1) % tableSize;
     }
 
-
+    if (Input::GetKeyUp(Keyboard::Up))
+    {
+        colorIndex = (colorIndex - 1 + tableSize) % tableSize;
+    }
+	if (Input::GetKey(Keyboard::Left))
+	{
+		sp -= 0.01f;
+	}
+	if (Input::GetKey(Keyboard::Right))
+	{
+		sp += 0.01f;
+	}
     CBParam cb;
 
-    // カラーテーブルから現在のインデクスの色を設定
+    // カラーテーブルから現在のインデクスの色を設定a
     cb.baseColor = colorTable[colorIndex];
+
+	cb.sp = sp; // スピード変数を設定
 
     // 定数バッファを更新
     D3DManager::getInstance()->GetContext()->UpdateSubresource(constantBuffer.Get(), 0, nullptr, &cb, 0, 0);
